@@ -1,0 +1,9 @@
+Metadata-Version: 2.1
+Name: torchtrainer
+Version: 0.0.1
+Summary: Helper modules for training neural networks with Pytorch.
+Author: Cesar Comin
+Project-URL: Homepage, https://github.com/chcomin/torchtrainer
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown

@@ -1,0 +1,47 @@
+model_name:TOSNet
+random_seed:1234
+num_inputs:4
+num_classes:1
+backbone:resnet50
+lr_size:512
+num_thin_samples:4
+num_non_thin_samples:1
+min_size:512
+max_size:1980
+roi_size:512
+num_epochs:50
+batch_size:1
+snapshot:10
+lr:0.001
+weight_decay:0.0005
+momentum:0.9
+num_workers:6
+relax_crop:50
+zero_pad_crop:True
+adaptive_relax:True
+display:20
+context_loss:{'bbce': 1}
+mask_loss:{'bootstrapped_ce': 1, 'dice': 1}
+edge_loss:{'bbce': 1, 'dice': 1}
+dataset:['pngimg']
+ignore_categories:[]
+loss_average:size
+lr_schedule:poly
+bootstrapped_ratio:0.0625
+optimizer:SGD (
+Parameter Group 0
+    dampening: 0
+    lr: 0.001
+    momentum: 0.9
+    nesterov: False
+    weight_decay: 0.0005
+
+Parameter Group 1
+    dampening: 0
+    lr: 0.01
+    momentum: 0.9
+    nesterov: False
+    weight_decay: 0.0005
+)
+dataset_train:pngimg
+transformations_train:['RandomHorizontalFlip', "CropFromMask:(crop_elems=['image', 'gt', 'thin', 'void_pixels'], mask_elem=gt, relax=50,zero_pad=True,adaptive_relax=True)", "Resize(resize_elems=['image', 'gt', 'thin', 'void_pixels'], min_size=512, max_size=1980, flagvals=None, prefix=)", 'ComputeImageGradient(elem=image)', 'ExtremePoints:(sigma=10, pert=5, elem=gt)', "GaussianTransform(tr_elems=['extreme_points'], mask_elem=gt, sigma=10, tr_name=points)", 'RandomCrop', 'MatchROIs(crop_elem=gt, resolution=512)', "FixedResizePoints(resolutions={'extreme_points': (512, 512)}, mask_elem=gt, prefix=lr_)", "FixedResize:{'image': (512, 512), 'gt': (512, 512), 'void_pixels': (512, 512)}", "GaussianTransform(tr_elems=['lr_extreme_points'], mask_elem=lr_gt, sigma=10, tr_name=lr_points)", 'NormalizeImage', "ConcatInputs(cat_elems=['lr_image', 'lr_points'], cat_name=concat_lr)", "ConcatInputs(cat_elems=['crop_image', 'crop_points'], cat_name=concat)", "ConcatInputs(cat_elems=['crop_image', 'crop_image_grad'], cat_name=grad)", "ExtractEdge(mask_elems=['crop_gt'])", "RemoveElements(rm_elems['points', 'image', 'gt', 'void_pixels', 'thin', 'image_grad'])", 'ToTensor']

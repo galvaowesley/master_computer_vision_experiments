@@ -1,0 +1,7 @@
+*.png
+*.jpg
+*.tiff
+*.tif
+*.pth
+*.ckpt
+*.tar

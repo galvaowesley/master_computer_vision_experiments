@@ -1,0 +1,68 @@
+class_weights: &id001 !!python/tuple
+- 0.3414
+- 0.6586
+iters: 25900
+loss: cross_entropy
+lr: 0.01
+meta:
+  batch_size_train: 8
+  batch_size_valid: 8
+  class_weights: *id001
+  crop_size: !!python/tuple
+  - 256
+  - 256
+  device: cuda
+  epochs: 50
+  experiment: unet_l_1_1_1_c_16_32_64
+  img_dir: !!python/object/apply:pathlib.PosixPath
+  - /
+  - home
+  - wesleygalvao
+  - Documents
+  - repositorios
+  - thin-object-selection
+  - data
+  - ThinObject5K_fine_tuning
+  - images
+  label_dir: !!python/object/apply:pathlib.PosixPath
+  - /
+  - home
+  - wesleygalvao
+  - Documents
+  - repositorios
+  - thin-object-selection
+  - data
+  - ThinObject5K_fine_tuning
+  - masks
+  log_dir: logs
+  loss: cross_entropy
+  lr: 0.01
+  meta: null
+  model_channels: &id002 !!python/tuple
+  - 16
+  - 32
+  - 64
+  model_layers: &id003 !!python/tuple
+  - 1
+  - 1
+  - 1
+  model_type: unet
+  momentum: 0.9
+  non_blocking: false
+  num_workers: 3
+  pin_memory: false
+  resume: false
+  save_best: true
+  save_every: 1
+  scheduler_power: 0.9
+  seed: 12
+  train_val_split: 0.1
+  use_amp: true
+  use_transforms: false
+  weight_decay: 0.0
+model_channels: *id002
+model_layers: *id003
+model_type: unet
+momentum: 0.9
+scheduler_power: 0.9
+weight_decay: 0.0
