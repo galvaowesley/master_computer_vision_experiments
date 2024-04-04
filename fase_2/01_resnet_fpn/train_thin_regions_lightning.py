@@ -32,6 +32,8 @@ default_params = {
     'loss': 'cross_entropy',
     'scheduler_power': 0.9,             # Power por the polynomial scheduler
     'class_weights': (0.367, 0.633),    # Weights to use for cross entropy
+    # Type of normalization. Options: 'batch_norm', 'group_norm'
+    'normalization_layer': 'batch_norm',
     # Efficiency
     'device': 'cuda',
     'num_workers': 3,                   # Number of workers for the dataloader
@@ -77,8 +79,23 @@ def initial_setup(params):
 
     return experiment_folder
 
+def replace_to_group_norm(module):
+    '''Recursively replace BatchNorm2d layers of a module by GroupNorm.'''
+
+    for name, child in module.named_children():
+        if len(list(child.children())) > 0:
+            replace_to_group_norm(child)
+            
+        if isinstance(child, nn.BatchNorm2d):
+            # logic used in the paper to set the number of groups
+            num_features = child.num_features
+            num_groups = 32 if (num_features % 32 == 0) else num_features
+            #---
+            layer = nn.GroupNorm(num_channels=num_features, num_groups=num_groups)
+            setattr(module, name, layer)
+
 class LitSeg(pl.LightningModule):
-    def __init__(self, model_layers, model_channels, loss, class_weights, lr, momentum, weight_decay, iters, scheduler_power, 
+    def __init__(self, model_layers, model_channels, loss, class_weights, normalization_layer, lr, momentum, weight_decay, iters, scheduler_power, 
                  model_type, meta):
         super().__init__()
         self.save_hyperparameters()  # Add __init__ parameters to checkpoint file
@@ -96,7 +113,14 @@ class LitSeg(pl.LightningModule):
             model = torchtrainer.models.resnet_seg.ResNetSeg(model_layers, model_channels,  in_channels=3)
         elif model_type=='unet2':
              model = torchtrainer.models.resunet.ResUNetV2(model_layers, model_channels,  in_channels=3)
-        elif model_type=='resnet_fpn':
+        elif model_type=='resnet18_fpn':
+            model = smp.FPN(
+                encoder_name="resnet18",        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+                encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+                in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+                classes=2,                      # model output channels (number of classes in your dataset)
+            )
+        elif model_type=='resnet50_fpn':
             model = smp.FPN(
                 encoder_name="resnet50",        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
                 encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
@@ -111,6 +135,9 @@ class LitSeg(pl.LightningModule):
         self.iters = iters
         self.scheduler_power = scheduler_power
         self.model = model
+        
+        if normalization_layer == 'group_norm':
+            replace_to_group_norm(self.model)
 
     def forward(self, x):
         '''Defining this method allows using an instance of this class as litseg(x).'''
@@ -153,6 +180,8 @@ class LitSeg(pl.LightningModule):
         }
 
         return {'optimizer':optimizer, 'lr_scheduler':lr_scheduler_config}
+    
+
 
 class MyLogger(Logger):
     '''Simple class for logging performance metrics.'''
@@ -181,7 +210,7 @@ class MyLogger(Logger):
             else:
                 saved_metrics[k] = [(step,v)]
 
-def train(ds_train, ds_valid, experiment_folder, model_layers, model_channels, model_type, loss, class_weights, epochs, lr, batch_size_train, batch_size_valid, momentum=0.9, 
+def train(ds_train, ds_valid, experiment_folder, model_layers, model_channels, model_type, loss, class_weights, normalization_layer, epochs, lr, batch_size_train, batch_size_valid, momentum=0.9, 
           weight_decay=0., scheduler_power=0.9, num_workers=0, use_amp=False, pin_memory=False, resume=False, save_every=1, save_best=True, seed=None, log_dir='.', 
           experiment='1', meta=None, **kwargs):
 
@@ -227,7 +256,7 @@ def train(ds_train, ds_valid, experiment_folder, model_layers, model_channels, m
             pl.seed_everything(seed+start_epoch, workers=True)
     else:
         checkpoint_file = None
-        lit_model = LitSeg(model_layers, model_channels, loss, class_weights, lr, momentum, weight_decay, 
+        lit_model = LitSeg(model_layers, model_channels, loss, class_weights, normalization_layer, lr, momentum, weight_decay, 
                            total_iters, scheduler_power, model_type, meta)
         start_epoch = 0
 

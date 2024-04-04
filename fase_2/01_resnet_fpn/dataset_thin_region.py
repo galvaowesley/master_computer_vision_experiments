@@ -94,22 +94,22 @@ def create_transform(image, label, size_smaller, size_larger, mean, std):
     mean = torch.tensor(mean).reshape(3, 1, 1)
     std = torch.tensor(std).reshape(3, 1, 1)
     
-    #TODO: Add a condition to not resize if the size_smaller is None. 
-    
-
-    image = v2.functional.resize(
-        image, 
-        size=size_smaller, 
-        max_size=size_larger,
-        interpolation=v2.InterpolationMode.BILINEAR, 
-        antialias=True
-    )
-    label = v2.functional.resize(
-        label[None],
-        size=size_smaller,
-        max_size=size_larger,
-        interpolation=v2.InterpolationMode.NEAREST_EXACT
-    )[0]
+  
+    if size_smaller is not None:       
+        image = v2.functional.resize(
+            image, 
+            size=size_smaller, 
+            max_size=size_larger,
+            interpolation=v2.InterpolationMode.BILINEAR, 
+            antialias=True
+        )
+        label = v2.functional.resize(
+            label[None],
+            size=size_smaller,
+            max_size=size_larger,
+            interpolation=v2.InterpolationMode.NEAREST_EXACT
+        )[0]
+        
     image = image.float()/255.
     image = (image-mean)/std
 
@@ -128,12 +128,17 @@ def create_datasets(img_dir, label_dir, crop_size=(256,256), train_val_split=0.1
     seed: seed for splitting the data
     """
 
-    mean_data = 0.438
-    std_data = 0.243
+    mean_R = 0.469
+    mean_G = 0.443
+    mean_B = 0.402
+    std_R = 0.237
+    std_G = 0.228
+    std_B = 0.234
+    
 
     # Set transformations
-    train_transform = partial(create_transform, size_smaller=768, size_larger=2*768, mean=(mean_data, mean_data, mean_data), std=(std_data, std_data, std_data))
-    valid_transform = partial(create_transform, size_smaller=768, size_larger=2*768, mean=(mean_data, mean_data, mean_data), std=(std_data, std_data, std_data))
+    train_transform = partial(create_transform, size_smaller=None, size_larger=None, mean=(mean_R, mean_G, mean_B), std=(std_R, std_G, std_B))
+    valid_transform = partial(create_transform, size_smaller=None, size_larger=None, mean=(mean_R, mean_G, mean_B), std=(std_R, std_G, std_B))
 
 
     ds = ImageSegmentationDataset(img_dir, label_dir, name_to_label_map, img_opener=img_opener, label_opener=label_opener)
