@@ -5,3 +5,4 @@
 *.pth
 *.ckpt
 *.tar
+datasets/
