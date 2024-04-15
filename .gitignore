@@ -7,5 +7,5 @@
 *.tar
 *.pyc
 datasets/
-dataset.zip
+datasets.zip
 events.out*
