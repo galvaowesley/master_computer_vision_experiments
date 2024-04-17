@@ -136,7 +136,7 @@ def subset(dataset_path=DATASET_PATH, split='train', custom_transforms=default_t
     ds = thinobject5k.ThinObject5K(
         root=dataset_path,
         split=split, 
-        transform=transforms, 
+        transform=composed_transforms_tr, 
         use_thin=use_thin
     )
     p = OrderedDict()
