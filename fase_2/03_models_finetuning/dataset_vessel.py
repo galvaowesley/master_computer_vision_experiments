@@ -174,3 +174,46 @@ def create_datasets(img_dir, label_dir, crop_size=(256,256), train_val_split=0.1
     return ds_train, ds_valid
 
 
+def get_statistics(ds):
+    """
+    Get the mean and standard deviation of the dataset. Besides, it also calculates 
+    the percentage of object and background pixels.
+    
+    Parameters
+    ----------
+        ds (Dataset): The dataset for which to calculate the statistics.
+        
+    Returns
+    -------
+        tuple: A tuple containing the mean and standard deviation of the dataset.
+    """
+
+    n = len(ds)
+    mean = 0.
+    std = 0.
+    
+    count_pixels_obj = 0 # Object pixels
+    count_pixels_bg = 0 # Background pixels
+    
+    for img, target in ds:
+        mean += np.mean(np.array(img))
+        std += np.std(np.array(img))
+        
+        count_pixels_bg += np.sum(np.array(target) == 0)
+        count_pixels_obj += np.sum(np.array(target) == 1)
+    
+        
+    mean /= n
+    std /= n
+    
+    percent_obj = count_pixels_obj / (count_pixels_obj + count_pixels_bg)
+    percent_bg = count_pixels_bg / (count_pixels_obj + count_pixels_bg)
+    
+    print(f'Mean: {mean:.2f}')
+    print(f'Std: {std:.2f}')
+    
+    print(f'Percentage of object pixels: {percent_obj:.2f}')
+    print(f'Percentage of background pixels: {percent_bg:.2f}')
+    
+    
+    #return mean, std
